@@ -1,0 +1,9 @@
+.gitea
+
+# Android/Gradle build artifacts (regenerate on every build)
+rust/plugin/android/build/
+rust/plugin/android/.tauri/
+rust/plugin/android/.gradle/
+
+# Rust target directory
+rust/plugin/target/

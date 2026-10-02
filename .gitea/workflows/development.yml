@@ -1,0 +1,47 @@
+name: Development Workflow
+on:
+  push:
+    branches:
+      - development
+env:
+  module: js-native
+jobs:
+  Validation:
+    runs-on: ubuntu-latest
+    container:
+      image: node:latest
+    steps:
+      - name: Checkout
+        uses: tiagomta/checkout@v1
+        with:
+          repository: vistta/workspace
+          ref: main
+          token: ${{ secrets.TOKEN }}
+          fetch-depth: 0
+          submodules: true
+
+      - name: Close Issues
+        uses: tiagomta/gitea@v1
+        with:
+          token: ${{ secrets.TOKEN }}
+          working-directory: ./packages/${{ env.module }}
+          command: issues close --fromCommit
+
+      - name: Setup Node
+        run: npm run setup:ci
+
+      - name: Module Validation
+        working-directory: ./packages/${{ env.module }}
+        run: npx vistta project outdated
+
+      - name: Eslint Validation
+        working-directory: ./packages/${{ env.module }}
+        run: npx eslint .
+
+      - name: Typescript Validation
+        working-directory: ./packages/${{ env.module }}
+        run: npx tsc
+
+      - name: Unit Tests
+        working-directory: ./packages/${{ env.module }}
+        run: npx vistta test

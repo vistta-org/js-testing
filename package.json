@@ -1,0 +1,21 @@
+{
+  "name": "@vistta/js-testing",
+  "version": "0.1.0",
+  "description": "Headless browser test runner for Vistta JS",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "dependencies": {
+    "@vistta/console": "latest",
+    "@vistta/fs": "latest",
+    "playwright-chromium": "^1.56.0"
+  },
+  "peerDependencies": {
+    "@vistta/js": "*"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
