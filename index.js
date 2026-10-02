@@ -1,8 +1,8 @@
 import { COLORS } from "@vistta/console";
 import "@vistta/console/global";
 import fs from "@vistta/fs";
-import { chromium } from "playwright-chromium";
 import { fileURLToPath } from "node:url";
+import { chromium } from "playwright-chromium";
 
 const rendererPath = fileURLToPath(import.meta.resolve("@vistta/js/testing/renderer"));
 
@@ -29,6 +29,10 @@ export async function run(argv = [], { Bundler, parseArgs }) {
       if (!entry.includes("\\node_modules\\") && !entry.includes("/node_modules/")) {
         const page = await browser.newPage();
         try {
+          await page.route("http://vistta.test/**", (route) =>
+            route.fulfill({ contentType: "text/html", body: "<!doctype html><html><head></head><body></body></html>" }),
+          );
+          await page.goto("http://vistta.test/");
           process.chdir(fs.dirname(entry));
           const test = await bundler.run(fs.resolve(entry), {
             write: false,
@@ -36,17 +40,24 @@ export async function run(argv = [], { Bundler, parseArgs }) {
             globalName: "main",
             format: "iife",
           });
+          let resolveResult;
+          let rejectResult;
           const outcome = new Promise((resolve, reject) => {
+            resolveResult = resolve;
+            rejectResult = reject;
             page.on("pageerror", reject);
-            page.exposeBinding("visttaSend", (_, event, payload) => {
-              if (event === "test-results") resolve(payload);
-              if (event === "console" && process.env.NODE_DEBUG === "true") console[payload.level]?.(...payload.args);
-            }).catch(reject);
           });
-          await page.addScriptTag({ content: `globalThis.testOptions = ${JSON.stringify({ ...options, debug: process.env.NODE_DEBUG === "true" })};\nglobalThis.ipc = { send: (...args) => globalThis.visttaSend(...args) };\n${renderer.code}\n${test.code}` });
+          await page.exposeBinding("visttaSend", (_, event, payload) => {
+            if (event === "test-results") resolveResult(payload);
+            if (event === "test-error") rejectResult(new Error(payload));
+            if (event === "console" && process.env.NODE_DEBUG === "true") console[payload.level]?.(...payload.args);
+          });
+          await page.addScriptTag({
+            content: `globalThis.testOptions = ${JSON.stringify({ ...options, debug: process.env.NODE_DEBUG === "true" })};\nglobalThis.ipc = { send: (...args) => globalThis.visttaSend(...args) };\n${renderer.code}\n${test.code}`,
+          });
           results.push(...(await outcome));
         } catch (error) {
-          console.error(entry, error);
+          console.error(entry, error?.stack || String(error));
           failed = true;
         } finally {
           await page.close();
