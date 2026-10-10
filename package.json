@@ -11,10 +11,10 @@
   "dependencies": {
     "@vistta/console": "latest",
     "@vistta/fs": "latest",
-    "playwright-chromium": "^1.56.0"
+    "playwright-chromium": "^1.63.0"
   },
   "peerDependencies": {
-    "@vistta/js": "*"
+    "@vistta/js": "^0.1.0"
   },
   "engines": {
     "node": ">=22.0.0"
