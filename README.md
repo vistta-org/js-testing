@@ -99,12 +99,12 @@ npx vistta test --only
 npx vistta test --debug
 ```
 
-| Option | Default | Description |
-| ------ | ------- | ----------- |
-| patterns | `**/*.test.js`, `**/*.test.ts`, `**/*.test.jsx`, `**/*.test.tsx` | Glob patterns of test files to run |
-| `--filter` | – | Case-insensitive regex; only tests whose name matches run |
-| `--only` | – | Only tests (or tests inside suites) marked `.only` run |
-| `--debug` | – | Headed browser, page `console` forwarded to the terminal, `requestAnimationFrame` shimmed to `setTimeout(cb, 1)` |
+| Option     | Default                                                          | Description                                                                                                      |
+| ---------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| patterns   | `**/*.test.js`, `**/*.test.ts`, `**/*.test.jsx`, `**/*.test.tsx` | Glob patterns of test files to run                                                                               |
+| `--filter` | –                                                                | Case-insensitive regex; only tests whose name matches run                                                        |
+| `--only`   | –                                                                | Only tests (or tests inside suites) marked `.only` run                                                           |
+| `--debug`  | –                                                                | Headed browser, page `console` forwarded to the terminal, `requestAnimationFrame` shimmed to `setTimeout(cb, 1)` |
 
 The exit code is `0` when every test passes and `1` when any test fails or a test file fails to load.
 
@@ -139,14 +139,14 @@ Registers a test. The (async) callback's resolved value is the test result — a
 
 Assertion helper:
 
-| Matcher | Checks |
-| ------- | ------ |
-| `toEqual(value, unit?)` | strict equality (`===`) |
-| `toBeLessThan(value, unit?)` | `target < value` |
-| `toBeGreaterThan(value, unit?)` | `target > value` |
-| `toInclude(value)` | `target` contains `value` |
-| `toMatch(regex)` | `target` matches the regex |
-| `toThrow(message?)` | `target()` throws (exact or regex message match) |
+| Matcher                         | Checks                                           |
+| ------------------------------- | ------------------------------------------------ |
+| `toEqual(value, unit?)`         | strict equality (`===`)                          |
+| `toBeLessThan(value, unit?)`    | `target < value`                                 |
+| `toBeGreaterThan(value, unit?)` | `target > value`                                 |
+| `toInclude(value)`              | `target` contains `value`                        |
+| `toMatch(regex)`                | `target` matches the regex                       |
+| `toThrow(message?)`             | `target()` throws (exact or regex message match) |
 
 Every matcher is also available negated: `expect(target).not.<matcher>`.
 
@@ -168,11 +168,11 @@ Sleep helper: `await document.wait(500)`.
 
 Patched onto `HTMLElement.prototype`. Types `text` into an input/textarea one character at a time, dispatching `keydown` / `keypress` / `input` / `keyup` per character and a final `change` event:
 
-| Option | Default | Description |
-| ------ | ------- | ----------- |
-| `delay` | `100` | Delay (ms) between characters |
-| `clear` | `false` | Clear `value` before typing |
-| `dispatchKeyboardEvents` | `true` | Dispatch `keydown` / `keypress` / `keyup` |
+| Option                   | Default | Description                               |
+| ------------------------ | ------- | ----------------------------------------- |
+| `delay`                  | `100`   | Delay (ms) between characters             |
+| `clear`                  | `false` | Clear `value` before typing               |
+| `dispatchKeyboardEvents` | `true`  | Dispatch `keydown` / `keypress` / `keyup` |
 
 Throws if the target has no `value` property.
 
@@ -215,7 +215,7 @@ Sets `process.exitCode = 1` when tests fail.
 
 ## License
 
-Apache 2.0 with Commons Clause
+Licensed under the GNU General Public License version 3 only (`GPL-3.0-only`). See [LICENSE](LICENSE) for the full terms.
 
 ## Contributing
 
