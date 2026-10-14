@@ -89,6 +89,10 @@ npx vistta test
 # Custom glob patterns (positional, resolved against the current directory)
 npx vistta test src/**/*.test.jsx
 
+# Explicit runner selection (one environment per invocation)
+npx vistta test ".\packages\js\tests\client.test.jsx" --environment=browser
+npx vistta test ".\packages\cli\tests\*.test.js" --environment=node
+
 # Only tests whose name matches (case-insensitive regex)
 npx vistta test --filter="counter"
 
@@ -105,6 +109,14 @@ npx vistta test --debug
 | `--filter` | –                                                                | Case-insensitive regex; only tests whose name matches run                                                        |
 | `--only`   | –                                                                | Only tests (or tests inside suites) marked `.only` run                                                           |
 | `--debug`  | –                                                                | Headed browser, page `console` forwarded to the terminal, `requestAnimationFrame` shimmed to `setTimeout(cb, 1)` |
+| `--environment` | `browser` with VISTTA JS | `node` or `browser`; selects the runner before test files are loaded |
+
+The environment flag belongs only to the `@vistta/js` test command, not to
+individual suites or the built-in `@vistta/cli` command. The browser remains the
+default with `@vistta/js/config`; selecting Node delegates to the unchanged,
+Node-only `@vistta/cli` test command. Select compatible files explicitly. Imports
+and suite declarations do not change, and mixed-environment collections are not
+automatically split.
 
 The exit code is `0` when every test passes and `1` when any test fails or a test file fails to load.
 

@@ -1,6 +1,6 @@
 {
   "name": "@vistta/js-testing",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Headless browser test runner for Vistta JS",
   "license": "GPL-3.0-only",
   "type": "module",
@@ -9,12 +9,12 @@
     ".": "./index.js"
   },
   "dependencies": {
-    "@vistta/console": "latest",
-    "@vistta/fs": "latest",
+    "@vistta/console": "^1.1.0",
+    "@vistta/fs": "^1.1.0",
     "playwright-chromium": "^1.63.0"
   },
   "peerDependencies": {
-    "@vistta/js": "^0.1.0"
+    "@vistta/js": "^0.0.0"
   },
   "engines": {
     "node": ">=22.0.0"
