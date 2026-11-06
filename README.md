@@ -103,13 +103,13 @@ npx vistta test --only
 npx vistta test --debug
 ```
 
-| Option     | Default                                                          | Description                                                                                                      |
-| ---------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| patterns   | `**/*.test.js`, `**/*.test.ts`, `**/*.test.jsx`, `**/*.test.tsx` | Glob patterns of test files to run                                                                               |
-| `--filter` | –                                                                | Case-insensitive regex; only tests whose name matches run                                                        |
-| `--only`   | –                                                                | Only tests (or tests inside suites) marked `.only` run                                                           |
-| `--debug`  | –                                                                | Headed browser, page `console` forwarded to the terminal, `requestAnimationFrame` shimmed to `setTimeout(cb, 1)` |
-| `--environment` | `browser` with VISTTA JS | `node` or `browser`; selects the runner before test files are loaded |
+| Option          | Default                                                          | Description                                                                                                      |
+| --------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| patterns        | `**/*.test.js`, `**/*.test.ts`, `**/*.test.jsx`, `**/*.test.tsx` | Glob patterns of test files to run                                                                               |
+| `--filter`      | –                                                                | Case-insensitive regex; only tests whose name matches run                                                        |
+| `--only`        | –                                                                | Only tests (or tests inside suites) marked `.only` run                                                           |
+| `--debug`       | –                                                                | Headed browser, page `console` forwarded to the terminal, `requestAnimationFrame` shimmed to `setTimeout(cb, 1)` |
+| `--environment` | `browser` with VISTTA JS                                         | `node` or `browser`; selects the runner before test files are loaded                                             |
 
 The environment flag belongs only to the `@vistta/js` test command, not to
 individual suites or the built-in `@vistta/cli` command. The browser remains the
@@ -118,14 +118,16 @@ Node-only `@vistta/cli` test command. Select compatible files explicitly. Import
 and suite declarations do not change, and mixed-environment collections are not
 automatically split.
 
-The exit code is `0` when every test passes and `1` when any test fails or a test file fails to load.
+The exit code is `0` when every test passes and `1` when any test fails, a test file fails to load, or no test files match (after excluding `node_modules`). Empty discovery prints `No test files found` without launching Chromium.
+
+`NODE_DEBUG=true` is also supported as a legacy way to enable debug mode.
 
 ## How It Works
 
-1. `process.env.NODE_ENV` is set to `"testing"` and Chromium is launched (headless unless `--debug`).
+1. Matching test files are discovered. `process.env.NODE_ENV` is temporarily set to `"testing"` and Chromium is launched (headless unless `--debug` or `NODE_DEBUG=true`).
 2. The renderer is resolved from `@vistta/js/testing/renderer` and bundled for the browser (`platform: "browser"`, IIFE).
 3. Test files are discovered with the glob patterns (relative to the current directory); `node_modules` entries are skipped.
-4. Each test file gets a fresh page routed at `http://vistta.test/` (fulfilled with a blank HTML document). The working directory changes to the test file's folder while it is bundled (so relative imports resolve) and is restored afterwards.
+4. Each test file gets a fresh page routed at `http://vistta.test/` (fulfilled with a blank HTML document). The working directory changes to the test file's folder only while it is bundled (so relative imports resolve) and is restored afterwards. The original `NODE_ENV` is restored when the run finishes, including on failure.
 5. The renderer, the bundled test file, `testOptions`, and an `ipc` shim are injected in one script tag. The renderer registers the globals, patches the DOM helpers, runs all suites, and sends the results back over the exposed `visttaSend` binding (`test-results` / `test-error`). Uncaught page errors fail the file's run.
 6. The runner prints the colored report and sets the exit code.
 
@@ -135,7 +137,7 @@ Globals available inside test files (injected by the renderer):
 
 ### `suite(name, callback)`
 
-Registers a suite. The callback runs once; tests registered inside it run sequentially. Suites cannot be nested.
+Registers a suite. The callback runs once; tests registered inside it run concurrently. Suites cannot be nested.
 
 - `suite.only(name, callback)` — mark the suite for `--only`
 - `suite.skip(name, callback)` — skip every test in the suite
@@ -224,6 +226,29 @@ await run(["src/**/*.test.jsx", "--only"], { Bundler, parseArgs });
 - `parseArgs` — the `@vistta/cli` argument parser
 
 Sets `process.exitCode = 1` when tests fail.
+
+The bundler must have the loaders and extension resolvers required by your project configured; the CLI supplies these automatically. Runs temporarily change process-wide working directory and environment state. Do not invoke multiple runs concurrently in the same process, or combine a run with other work that depends on those globals. Use separate processes for parallel runs.
+
+## Security
+
+Run only trusted test files and dependencies. Test modules are bundled in the Node process and execute with normal browser capabilities. The `vistta.test` route supplies the test document; it does not block requests to other hosts or sandbox network access. The bundler can inline environment variables referenced by browser code. Do not run untrusted tests with credentials or sensitive environment variables, and use an isolated environment with restricted network access when needed. Debug mode also prints browser console output, which may contain sensitive test data.
+
+## Development Validation
+
+From this package directory:
+
+```bash
+npm test
+npm pack --dry-run --ignore-scripts
+```
+
+The Node test suite covers debug options, discovery, failure reporting, process-state restoration, and resource cleanup. It also executes the actual renderer in Chromium and checks failing-test exit codes in a separate process. It requires the workspace development dependencies and the `@vistta/js` peer. On Linux CI, install Chromium and its system libraries before running the suite:
+
+```bash
+npx playwright install --with-deps chromium
+```
+
+The release workflow starts from `0.0.0` and uses a Patch release to publish `0.0.1`. Coordinate publication with `@vistta/js@0.0.1` or a compatible newer peer; the local workspace peer is still `0.0.0` until its own release.
 
 ## License
 

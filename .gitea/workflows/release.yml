@@ -24,7 +24,7 @@ on:
         type: boolean
 
 env:
-  module: js-native
+  module: js-testing
   ref: refs/heads/development
 jobs:
   Validation:
@@ -52,9 +52,17 @@ jobs:
         working-directory: ./packages/${{ env.module }}
         run: npx eslint .
 
+      - name: Install Chromium
+        working-directory: ./packages/${{ env.module }}
+        run: npx playwright install --with-deps chromium
+
       - name: Unit Tests
         working-directory: ./packages/${{ env.module }}
-        run: npx vistta test
+        run: npm test
+
+      - name: Package Validation
+        working-directory: ./packages/${{ env.module }}
+        run: npm pack --dry-run --ignore-scripts
 
   Release:
     needs: Validation
