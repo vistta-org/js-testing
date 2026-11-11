@@ -2,6 +2,8 @@
 
 Headless browser test runner for **Vistta JS** — runs `*.test.{js,ts,jsx,tsx}` files in headless Chromium (Playwright), with the Vistta test globals (`suite`, `test`, `expect`, `document.mount`) injected by the `@vistta/js` renderer.
 
+> **Production readiness:** This package has not yet been tested in production. Validate it for your use case before deploying.
+
 ## Features
 
 - **Real browser environment** — tests execute in Chromium (`playwright-chromium`) against the real DOM, not a Node emulation
