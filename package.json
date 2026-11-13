@@ -1,6 +1,6 @@
 {
   "name": "@vistta/js-testing",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Headless browser test runner for Vistta JS",
   "license": "GPL-3.0-only",
   "type": "module",
