@@ -38,10 +38,10 @@ export async function run(argv = [], { Bundler, parseArgs }) {
     for (const entry of entries) {
       const page = await browser.newPage();
       try {
-        await page.route("http://vistta.test/**", (route) =>
+        await page.route("https://vistta.test/**", (route) =>
           route.fulfill({ contentType: "text/html", body: "<!doctype html><html><head></head><body></body></html>" }),
         );
-        await page.goto("http://vistta.test/");
+        await page.goto("https://vistta.test/");
         let test;
         try {
           process.chdir(fs.dirname(entry));

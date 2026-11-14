@@ -23,6 +23,7 @@ describe("browser runner", { concurrency: false }, () => {
   let state;
 
   beforeEach(async (context) => {
+    assert.ok("after" in context && "mock" in context, "Expected a per-test context");
     const cwd = process.cwd();
     const nodeEnv = process.env.NODE_ENV;
     const nodeDebug = process.env.NODE_DEBUG;
@@ -47,54 +48,57 @@ describe("browser runner", { concurrency: false }, () => {
       process.exitCode = exitCode;
       await rm(directory, { recursive: true, force: true });
     });
-    state.output = context.mock.method(console, "print", () => {});
-    state.error = context.mock.method(console, "error", () => {});
-    state.log = context.mock.method(console, "log", () => {});
-    state.close = context.mock.fn(async () => {});
-    state.launch = context.mock.method(chromium, "launch", async () => ({
-      close: state.close,
-      async newPage() {
-        const page = {
-          async route() {},
-          async goto() {},
-          on(event, callback) {
-            if (event === "pageerror") this.pageError = callback;
-          },
-          async exposeBinding(name, callback) {
-            assert.equal(name, "visttaSend");
-            this.send = callback;
-          },
-          async addScriptTag({ content }) {
-            this.options = JSON.parse(content.split("\n")[0].slice("globalThis.testOptions = ".length, -1));
-            if (state.pageError) {
-              this.pageError(new Error("page crashed"));
-              await new Promise((resolve) => setImmediate(resolve));
-            } else if (state.scriptError) {
-              throw new Error("script injection failed");
-            } else if (state.testError) {
-              await this.send(null, "test-error", "renderer failed");
-            } else {
-              await this.send(null, "console", { level: "log", args: ["browser output"] });
-              await this.send(null, "test-results", state.results);
-            }
-          },
-          close: context.mock.fn(async () => {}),
-        };
-        state.pages.push(page);
-        return page;
-      },
-    }));
-    state.Bundler = class {
-      async run(entry, options) {
-        assert.equal(process.env.NODE_ENV, "testing");
-        if (options.globalName) {
-          assert.equal(process.cwd(), dirname(entry));
-          if (state.bundleError) throw new Error("bundle failed");
+    state = {
+      ...state,
+      output: context.mock.method(console, "print", () => {}),
+      error: context.mock.method(console, "error", () => {}),
+      log: context.mock.method(console, "log", () => {}),
+      close: context.mock.fn(async () => {}),
+      launch: context.mock.method(chromium, "launch", async () => ({
+        close: state.close,
+        async newPage() {
+          const page = {
+            async route() {},
+            async goto() {},
+            on(event, callback) {
+              if (event === "pageerror") this.pageError = callback;
+            },
+            async exposeBinding(name, callback) {
+              assert.equal(name, "visttaSend");
+              this.send = callback;
+            },
+            async addScriptTag({ content }) {
+              this.options = JSON.parse(content.split("\n")[0].slice("globalThis.testOptions = ".length, -1));
+              if (state.pageError) {
+                this.pageError(new Error("page crashed"));
+                await new Promise((resolve) => setImmediate(resolve));
+              } else if (state.scriptError) {
+                throw new Error("script injection failed");
+              } else if (state.testError) {
+                await this.send(null, "test-error", "renderer failed");
+              } else {
+                await this.send(null, "console", { level: "log", args: ["browser output"] });
+                await this.send(null, "test-results", state.results);
+              }
+            },
+            close: context.mock.fn(async () => {}),
+          };
+          state.pages.push(page);
+          return page;
+        },
+      })),
+      Bundler: class {
+        async run(entry, options) {
+          assert.equal(process.env.NODE_ENV, "testing");
+          if (options.globalName) {
+            assert.equal(process.cwd(), dirname(entry));
+            if (state.bundleError) throw new Error("bundle failed");
+          }
+          return { code: "" };
         }
-        return { code: "" };
-      }
+      },
+      run: (...args) => run([state.file, ...args], { Bundler: state.Bundler, parseArgs }),
     };
-    state.run = (...args) => run([state.file, ...args], { Bundler: state.Bundler, parseArgs });
   });
 
   test("debug flag launches headed, forwards console and reaches the renderer", async () => {
@@ -209,7 +213,11 @@ describe("browser runner", { concurrency: false }, () => {
     await writeFile(
       state.file,
       `suite("Browser smoke", () => {
-      test("real DOM", () => {
+      test("real DOM", async () => {
+        expect(isSecureContext).toEqual(true);
+        expect(typeof crypto.randomUUID()).toEqual("string");
+        expect(typeof navigator.storage.getDirectory).toEqual("function");
+        expect((await navigator.storage.getDirectory()).kind).toEqual("directory");
         document.body.innerHTML = '<input id="value" value="ready">';
         expect(document.querySelector("#value").value).toEqual("ready");
       });
@@ -234,6 +242,15 @@ describe("browser runner", { concurrency: false }, () => {
         timeout: 45000,
       }),
       (error) => {
+        assert.ok(
+          error instanceof Error &&
+            "code" in error &&
+            "stderr" in error &&
+            typeof error.stderr === "string" &&
+            "stdout" in error &&
+            typeof error.stdout === "string",
+          "Expected a subprocess execution error",
+        );
         assert.equal(error.code, 1, error.stderr || error.stdout);
         assert.match(error.stdout, /FAILED.*fails/);
         assert.match(error.stdout, /0\/1 passing/);
