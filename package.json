@@ -15,7 +15,7 @@
   "dependencies": {
     "@vistta/console": "^1.1.0",
     "@vistta/fs": "^1.1.0",
-    "playwright-chromium": "^1.63.0"
+    "playwright-chromium": "^1.64.0"
   },
   "peerDependencies": {
     "@vistta/js": ">=0.0.1"
