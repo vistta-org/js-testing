@@ -2,7 +2,6 @@
   "name": "@vistta/js-testing",
   "version": "0.0.1",
   "description": "Headless browser test runner for Vistta JS",
-  "license": "GPL-3.0-only",
   "type": "module",
   "main": "index.js",
   "exports": {
@@ -12,6 +11,12 @@
     "test": "node --test tests/runner.test.js",
     "tests": "npm test"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://git.vistta.org/vistta/js-testing.git"
+  },
+  "author": "Tiago Terenas Almeida",
+  "license": "GPL-3.0-only",
   "dependencies": {
     "@vistta/console": "^1.1.0",
     "@vistta/fs": "^1.1.0",
